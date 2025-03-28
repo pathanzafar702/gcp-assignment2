@@ -1,0 +1,29 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  entrypoint: 'bash'
+  args:
+  - '-c'
+  - 'echo $_DOCKER_PASSWORD | docker login -u $_DOCKER_USERNAME --password-stdin'
+  id: 'docker-login'
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'docker.io/zafar702/pathan-flask-app:v2', '.']
+  id: 'build-image'
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'docker.io/zafar702/pathan-flask-app:v2']
+  id: 'push-image'
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  args:
+  - compute
+  - instances
+  - update-container
+  - pathan-flask-instance
+  - --zone=northamerica-northeast2-a
+  - --container-image=docker.io/zafar702/pathan-flask-app:v2
+  entrypoint: gcloud
+  id: 'update-instance'
+timeout: 1200s
+substitutions:
+  _DOCKER_USERNAME: ""
+  _DOCKER_PASSWORD: ""
+options:
+  default_logs_bucket_behavior: REGIONAL_USER_OWNED_BUCKET
